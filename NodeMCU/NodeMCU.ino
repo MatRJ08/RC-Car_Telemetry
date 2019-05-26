@@ -227,13 +227,47 @@ void procesar(String input, String * output){
     }
     else if(comando == "sense"){
       *output = getSense();         
+    }else if(comando == "circle"){
+      digitalWrite(In1, 1); //Direccion
+      digitalWrite(In2, 0);
+      analogWrite(EnA, 1023);  //Potencia
+      digitalWrite(EnB, 1);
+      digitalWrite(In3, 1);
+      digitalWrite(In4, 0);
+      delay(5500);
+      analogWrite(EnA, 0);
+
+    }else if(comando == "infinite"){
+      digitalWrite(In1, 1); //Direccion
+      digitalWrite(In2, 0);  
+      analogWrite(EnA, 1023);  //Potencia
+      digitalWrite(EnB, 1);
+      digitalWrite(In3, 1);
+      digitalWrite(In4, 0);
+      delay(6200);
+      digitalWrite(In3, 0); //Direccion
+      digitalWrite(In4, 1);
+      delay(4500); 
+      analogWrite(EnA, 0);
+
+    }else if(comando == "zigzag"){
+      digitalWrite(In1, 1); //Direccion
+      digitalWrite(In2, 0);  
+      analogWrite(EnA, 1023);  //Potencia
+      digitalWrite(EnB, 1);
+      digitalWrite(In3, 1);
+      digitalWrite(In4, 0);
+      delay(1000);
+      digitalWrite(In3, 0);
+      digitalWrite(In4,1);
+      delay(1000);
+      digitalWrite(In3, 1); //Direccion
+      digitalWrite(In4, 0);
+      delay(1000);
+      digitalWrite(In3, 0);
+      digitalWrite(In4, 1);
+      analogWrite(EnA, 0);
     }
-    /**
-     * ## AGREGAR COMPARACIONES PARA COMANDOS SIN VALOR
-     * EJEM: else if (comando == CIRCLE) {
-     *  
-     * } 
-     */
     else{
       Serial.print("Comando no reconocido. Solo presenta llave");
       *output = "Undefined key value: " + comando+";";
