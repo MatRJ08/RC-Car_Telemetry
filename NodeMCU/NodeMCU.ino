@@ -80,6 +80,11 @@ const long interval = 100;
 #define In3 D1 // 
 #define EnB D0 // 
 #define In4 D5 // 0 para ir hacia adelante
+/* 
+ *  Pin donde esta conectada la bateria
+ *  Devuelve un numero con el estado de la bateria
+ */
+#define bateria A0 //
 
 
 
@@ -303,17 +308,26 @@ String implementar(String llave, String valor){
     if(valor.toInt()>0){
       Serial.print("Move....: ");
       Serial.println(valor);
-      digitalWrite(In1,HIGH);
-      digitalWrite(In2,LOW);
-      analogWrite(EnA,valor.toInt());
+      digitalWrite(In1, HIGH);
+      digitalWrite(In2, LOW);
+      analogWrite(EnA, valor.toInt());
+      result = "Avanzando";
     }
     else if(valor.toInt()<0){
       Serial.print("Move....: ");
       Serial.println(valor);
-      digitalWrite(In1,LOW);
-      digitalWrite(In2,HIGH);  
-      int negativo=-(valor.toInt());
-      analogWrite(EnA,negativo);    
+      digitalWrite(In1, LOW);
+      digitalWrite(In2, HIGH);  
+      int negativo = -(valor.toInt());
+      analogWrite(EnA,negativo);  
+      result = "Reversa";  
+    }
+    else{
+      if(digitalRead(In1)== HIGH or digitalRead(In2) == HIGH){
+        result = "Frenar";
+      }else{
+        result = "No mover";
+      }
     }
   }
  
@@ -360,30 +374,57 @@ String implementar(String llave, String valor){
     Serial.println(valor);
     byte data = B00001111; 
     //Recomendación utilizar operadores lógico de bit a bit (bitwise operators)
-    if(llave[1]=='f'){
-        Serial.println("Luces frontales");
-        data = B00000000;      
-      }
-    switch (valor[0]){
+    switch (llave[1]){
       case 'f':
-        Serial.println("Luces frontales");
-        data = B00111111;
-        //# AGREGAR CÓDIGO PARA ENCENDER LUCES FRONTALES
-        break;
+        if(valor.toInt()==1){          
+          Serial.println("Luces frontales encendidas");
+          data = data & B00111111;
+          result = "Luces frontales encendidas";
+          break;
+        }
+        else if(valor.toInt() == 0){         
+          Serial.println("Luces frontales apagadas");
+          data = data & B11111111;
+          result = "Luces frontales apagadas";
+          break;        
+        }
+        
       case 'b':
-        Serial.println("Luces traseras");
-        data = B11001111;
-        //# AGREGAR CÓDIGO PARA ENCENDER O APAGAR LUCES TRASERAS
+        if(valor.toInt() == 1){          
+          Serial.println("Luces traseras encendidas");
+          data = data & B11001111;
+          result = "Luces traseras encendidas";
+        }
+        else if(valor.toInt() == 0){         
+          Serial.println("Luces traseras apagadas");
+          data = data & B11111111;
+          result = "Luces traseras apagadas";    
+        }
         break;
+        
       case 'l':
-        Serial.println("Luces izquierda");
-        data = B11110111;
-        //# AGREGAR CÓDIGO PARA ENCENDER O APAGAR DIRECCIONAL IZQUIERDA
+        if(valor.toInt() == 1){          
+          Serial.println("Direccional izquierda encendida");
+          data = data & B11110111;
+          result = "Direccional izquierda encendida";
+        }
+        else if(valor.toInt() == 0){         
+          Serial.println("Direccional izquierda apagada");
+          data = data & B11111111;
+          result = "Direccional izquierda apagada";   
+        }
         break;
       case 'r':
-        Serial.println("Luces derechas");
-        data = B11111011;
-        //# AGREGAR PARA CÓDIGO PARA ENCENDER O APAGAR DIRECCIONAL DERECHA
+        if(valor.toInt() == 1){          
+          Serial.println("Direccional derecha encendida");
+          data = data & B11111011;
+          result = "Direccional derecha encendida";
+        }
+        else if(valor == 0){         
+          Serial.println("Direccional derecha apagada");
+          data = data & B11111111;
+          result = "Direccional derecha apagada";    
+        }
         break;
       /**
        * # AGREGAR CASOS CON EL FORMATO l[caracter]:valor;
@@ -412,8 +453,12 @@ String implementar(String llave, String valor){
  */
 String getSense(){
   //# EDITAR CÓDIGO PARA LEER LOS VALORES DESEADOS
-  int batteryLvl = -1;
-  int light = -1;
+  /*vv = analogRead(bat);
+  analogV = bat*2;
+  r = analogV*(100/6);
+  result = bate + r +"%";*/ 
+  int batteryLvl = analogRead(bateria);
+  int light = analogRead(ldr);
 
   // EQUIVALENTE A UTILIZAR STR.FORMAT EN PYTHON, %d -> valor decimal
   char sense [16];
