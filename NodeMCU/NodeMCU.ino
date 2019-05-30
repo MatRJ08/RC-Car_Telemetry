@@ -27,8 +27,8 @@
  * Este servidor no funciona correctamente en las redes del TEC,
  * se recomienda crear un hotspot con el celular
  */
-const char* ssid = "WiFiCar";
-const char* password = "pass1234";
+const char* ssid = "Mat-Fi";
+const char* password = "wato0807";
 
 
 // servidor con el puerto y variable con la maxima cantidad de 
@@ -80,6 +80,11 @@ const long interval = 100;
 #define In3 D1 // 
 #define EnB D0 // 
 #define In4 D5 // 0 para ir hacia adelante
+/* 
+ *  Pin donde esta conectada la bateria
+ *  Devuelve un numero con el estado de la bateria
+ */
+#define bateria A0 //
 
 
 
@@ -227,13 +232,54 @@ void procesar(String input, String * output){
     }
     else if(comando == "sense"){
       *output = getSense();         
+    }else if(comando == "circle"){      
+      analogWriteFreq(2000); //Aumento de frecuencia
+      digitalWrite(In1, HIGH); //Variables para que se mueva hacia el frente
+      digitalWrite(In2, LOW);
+      analogWrite(EnA, 1023);  //Potencia que se le manda al mortor principal
+      digitalWrite(In3, LOW); //Variables para girar a la derecha
+      digitalWrite(In4, HIGH);
+      analogWrite(EnB, 1023);
+      delay(5500);
+      analogWrite(EnA, 0);
+
+    }else if(comando == "infinite"){
+      analogWriteFreq(2000); //Aumento de frecuencia
+      digitalWrite(In1, HIGH); //Variables para que se mueva hacia el frente
+      digitalWrite(In2, LOW);  
+      analogWrite(EnA, 1023);  //Potencia que se le manda al mortor principal
+      digitalWrite(In3, LOW); //Variables para girar a la derecha
+      digitalWrite(In4, HIGH);
+      analogWrite(EnB, 1023);
+      delay(5000);
+      digitalWrite(In3, HIGH); //Variables para girar a la izquierda
+      digitalWrite(In4, LOW);
+      analogWrite(EnB, 1023);
+      delay(5000); 
+      analogWrite(EnA, 0);
+
+    }else if(comando == "zigzag"){
+      analogWriteFreq(2000); //Aumento de frecuencia
+      digitalWrite(In1, HIGH); //Variables para que se mueva hacia el frente
+      digitalWrite(In2, LOW);    
+      analogWrite(EnA, 1023);  //Potencia que se le manda al mortor principal
+      digitalWrite(In3, LOW); //Variables para girar a la derecha
+      digitalWrite(In4, HIGH);
+      analogWrite(EnB, 1023);
+      delay(1000);
+      digitalWrite(In3, HIGH); //Variables para girar a la izquierda
+      digitalWrite(In4, LOW);
+      analogWrite(EnB, 1023);
+      delay(1000);
+      digitalWrite(In3, LOW); //Variables para girar a la derecha
+      digitalWrite(In4, HIGH);
+      analogWrite(EnB, 1023);
+      delay(1000);
+      digitalWrite(In3, HIGH); //Variables para girar a la izquierda
+      digitalWrite(In4, LOW);
+      analogWrite(EnB, 1023);
+      analogWrite(EnA, 0);
     }
-    /**
-     * ## AGREGAR COMPARACIONES PARA COMANDOS SIN VALOR
-     * EJEM: else if (comando == CIRCLE) {
-     *  
-     * } 
-     */
     else{
       Serial.print("Comando no reconocido. Solo presenta llave");
       *output = "Undefined key value: " + comando+";";
@@ -244,32 +290,73 @@ void procesar(String input, String * output){
 }
 
 String implementar(String llave, String valor){
-  /**
-   * La variable result puede cambiar para beneficio del desarrollador
-   * Si desea obtener más información al ejecutar un comando.
-   */
   String result="ok;";
   Serial.print("Comparing llave: ");
   Serial.println(llave);
   if(llave == "pwm"){
-    Serial.print("Move....: ");
-    Serial.println(valor);
-    //# AGREGAR PARA CÓDIGO PARA MOVER EL CARRO HACIA DELANTE Y ATRAS
+    if(valor.toInt()>0){
+      Serial.print("Move....: ");
+      Serial.println(valor);
+      digitalWrite(In1, HIGH);//Mover hacia el frente
+      digitalWrite(In2, LOW);
+      analogWriteFreq(2000);// Se cambia la frecuenacia para aumentar la fuerza del motor
+      analogWrite(EnA, valor.toInt());
+      result = "Avanzando";
+    }
+    else if(valor.toInt()<0){
+      Serial.print("Move....: ");
+      Serial.println(valor);
+      digitalWrite(In1, LOW);//Mover hacia atras
+      digitalWrite(In2, HIGH);
+      analogWriteFreq(2000);// Se cambia la frecuenacia para aumentar la fuerza del motor
+      int negativo = -(valor.toInt());//Pasar valor de negativo a positivo, asi el motor podra arrancar
+      analogWrite(EnA,negativo);  
+      result = "Reversa";  
+    }
+    else{
+      Serial.print("Move....: ");
+      Serial.println(valor); 
+      if(digitalRead(In1)== HIGH or digitalRead(In2) == HIGH){ //Verifica si ya el carro esta en movimiento
+        result = "Frenar";
+      }else{
+        result = "No mover";
+      }
+      digitalWrite(In1, LOW);//le dice al motor que no se mueva
+      digitalWrite(In2, LOW); 
+      analogWrite(EnA,valor.toInt()); 
+    }
   }
  
   else if(llave == "dir"){
     switch (valor.toInt()){
       case 1:
+        Serial.println("Girando derecha");   
+        digitalWrite(In3, LOW); //Variables para girar a la derecha
+        digitalWrite(In4, HIGH);
+
+        analogWriteFreq(2500); //Aumento de frecuencia
+        analogWrite(EnB,1023);
         Serial.println("Girando derecha");
-        //# AGREGAR CÓDIGO PARA GIRAR DERECHA
+        result = "Girando derecha";
         break;
       case -1:
+        Serial.println("Girando izquierda");   
+        digitalWrite(In3,HIGH); //Variables para girar a la izquierda
+        digitalWrite(In4,LOW);
+
+        analogWriteFreq(2500);//Aumento de frecuencia
+        analogWrite(EnB,1023);
         Serial.println("Girando izquierda");
-        //# AGREGAR CÓDIGO PARA GIRAR IZQUIERDA
+        result = "Girando izquierda";
         break;
        default:
-        Serial.println("directo");
-        //# AGREGAR CÓDIGO PARA NO GIRAR 
+        Serial.println("directo");   
+        digitalWrite(In3,LOW);//Variables para no girar
+        digitalWrite(In4,LOW);
+
+        analogWrite(EnB,0);
+        Serial.println("Directo");
+        result = "Directo";
         break;
     }
   }
@@ -277,24 +364,58 @@ String implementar(String llave, String valor){
     Serial.println("Cambiando Luces");
     Serial.print("valor luz: ");
     Serial.println(valor);
-    byte data = B00000000;
-    //Recomendación utilizar operadores lógico de bit a bit (bitwise operators)
+    byte data = 0b11111111; //Apaga todas las luces
     switch (llave[1]){
       case 'f':
-        Serial.println("Luces frontales");
-        //# AGREGAR CÓDIGO PARA ENCENDER LUCES FRONTALES
-        break;
+        if(valor.toInt()==1){          
+          Serial.println("Luces frontales encendidas");
+          data = data ^ 0b11000000; //Prende las luces blancas
+          result = "Luces frontales encendidas";
+          break;
+        }
+        else if(valor.toInt() == 0){         
+          Serial.println("Luces frontales apagadas");
+          data = data & 0b11111111;//Apaga las luces blancas
+          result = "Luces frontales apagadas";
+          break;        
+        }
+        
       case 'b':
-        Serial.println("Luces traseras");
-        //# AGREGAR CÓDIGO PARA ENCENDER O APAGAR LUCES TRASERAS
+        if(valor.toInt() == 1){          
+          Serial.println("Luces traseras encendidas");
+          data = data ^ 0b00110000;//Prende las luces rojas
+          result = "Luces traseras encendidas";
+        }
+        else if(valor.toInt() == 0){         
+          Serial.println("Luces traseras apagadas");
+          data = data & 0b11111111;//Apaga las luces rojas
+          result = "Luces traseras apagadas";    
+        }
         break;
+        
       case 'l':
-        Serial.println("Luces izquierda");
-        //# AGREGAR CÓDIGO PARA ENCENDER O APAGAR DIRECCIONAL IZQUIERDA
+        if(valor.toInt() == 1){          
+          Serial.println("Direccional izquierda encendida");
+          data = data ^ 0b00001000;//Prende la direccional izquierda
+          result = "Direccional izquierda encendida";
+        }
+        else if(valor.toInt() == 0){         
+          Serial.println("Direccional izquierda apagada");
+          data = data & 0b11111111;//Apaga la direccional izquierda
+          result = "Direccional izquierda apagada";   
+        }
         break;
       case 'r':
-        Serial.println("Luces derechas");
-        //# AGREGAR PARA CÓDIGO PARA ENCENDER O APAGAR DIRECCIONAL DERECHA
+        if(valor.toInt() == 1){          
+          Serial.println("Direccional derecha encendida");
+          data = data ^ 0b00000100;//Prende la direccional derecha
+          result = "Direccional derecha encendida";
+        }
+        else if(valor == 0){         
+          Serial.println("Direccional derecha apagada");
+          data = data & 0b11111111;//Apaga la direccional derecha
+          result = "Direccional derecha apagada";    
+        }
         break;
       /**
        * # AGREGAR CASOS CON EL FORMATO l[caracter]:valor;
@@ -323,12 +444,13 @@ String implementar(String llave, String valor){
  */
 String getSense(){
   //# EDITAR CÓDIGO PARA LEER LOS VALORES DESEADOS
-  int batteryLvl = -1;
-  int light = -1;
+  int batteryLvl = analogRead(bateria); //Leer nivel de bateria
+  int light = analogRead(ldr);//Leer cantidad de luz
+;
 
   // EQUIVALENTE A UTILIZAR STR.FORMAT EN PYTHON, %d -> valor decimal
   char sense [16];
-  sprintf(sense, "blvl:%d;ldr:%d;", batteryLvl, light);
+  sprintf(sense, "Nivel de bateria:%d%;Cantidad de luz:%d;", batteryLvl, light);
   Serial.print("Sensing: ");
   Serial.println(sense);
   return sense;
