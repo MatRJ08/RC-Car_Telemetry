@@ -1,6 +1,8 @@
-from tkinter import *       
+from tkinter import *    
+from tkinter import messagebox   
 from PIL import ImageTk, Image
 from WiFiClient import NodeMCU
+from tkinter import ttk
 
 import time
 
@@ -250,16 +252,20 @@ def botones_about():
 def principal_menu():
     global ventana
     ventana.title("Menu")
-    add_headers_menu()    
+    add_headers_menu() 
+
     global Fprincipal
     for widget in Fprincipal.winfo_children():
         widget.destroy() 
+
+    docLogo = open("logo.txt", "r")
+    docPatrocinadores = open("patrocinadores.txt" , "r")
 
     FEscuderia = Frame(Fprincipal)
     FEscuderia.pack(side = 'top')
     Nombre = Label(FEscuderia, text= 'Escuderia',fg='#1d2023')
     Nombre.config(font =('Courier New Baltic',44)) 
-    imgEscuderia = ImageTk.PhotoImage(Image.open('f1-helmet.png '))
+    imgEscuderia = ImageTk.PhotoImage(Image.open('imagenes\/' + docLogo.read()))
     EscuderiaLabel = Label(FEscuderia)
     EscuderiaLabel.image = imgEscuderia
     EscuderiaLabel.configure(image=imgEscuderia)
@@ -267,9 +273,9 @@ def principal_menu():
     EscuderiaLabel.pack(side = "left", fill = "both", expand = "yes")
     
     FCarro = Frame(Fprincipal)
-    FCarro.pack(side = "bottom")
+    FCarro.pack(side = "top")
     state = "Disponible"
-    imgCarro = ImageTk.PhotoImage(Image.open('formulaE_car2.jpg '))
+    imgCarro = ImageTk.PhotoImage(Image.open("imagenes\/formulaE_car2.jpg"))
     CarroLabel = Label(FCarro, width="200")
     CarroLabel.image = imgCarro
     CarroLabel.configure(image=imgCarro)
@@ -277,6 +283,16 @@ def principal_menu():
     Disponible = Label(FCarro, text= 'Estado: ' + state ,fg='#1d2023')
     Disponible.config(font =('Courier New Baltic',20)) 
     Disponible.pack(side = 'right',anchor='s')
+
+    allPatrocinadores = docPatrocinadores.read()
+    Patrocinadores = ""
+    for patrocinador in allPatrocinadores.split(","):
+        Patrocinadores += patrocinador + " "
+    lblPatrocinadores = Label(Fprincipal,text="Patrocinadores: "+Patrocinadores)
+    lblPatrocinadores.config(font =('Impact',18)) 
+    lblPatrocinadores.pack(side="bottom",pady=50)
+
+
     botones_menu()
 
 
@@ -287,14 +303,22 @@ def botones_menu():
     BtnPilotos = Button(botones,bg= "#131313",fg="#D9E01C",relief=FLAT, text = 'Mostrar Tabla', command = principal_pilotos)
     BtnPilotos.config(font =('Courier New Baltic',11) )
 
-    BtnTestD = Button(botones,bg= "#131313",fg="#D9E01C",relief=FLAT, text = 'Test Drive', command = principal_test)
+    BtnTestD = Button(botones,bg= "#131313",fg="#D9E01C",relief=FLAT, text = 'Test Drive', command = seleccionar_piloto)
     BtnTestD.config(font =('Courier New Baltic',11) )
+
+    BtnCambiarLogo = Button(botones,bg= "#131313",fg="#D9E01C",relief=FLAT, text = 'Cambiar Logo', command = cambiar_logo)
+    BtnCambiarLogo.config(font =('Courier New Baltic',11) )
+
+    BtnCambiarPatro = Button(botones,bg= "#131313",fg="#D9E01C",relief=FLAT, text = 'Cambiar Patrocinadores', command = cambiar_patro)
+    BtnCambiarPatro.config(font =('Courier New Baltic',11) )
 
     BtnAbout = Button(botones,bg= "#131313",fg="#D9E01C",relief=FLAT, text = 'About', command = principal_about)
     BtnAbout.config(font =('Courier New Baltic',11) )
 
     BtnPilotos.pack(side = LEFT,padx="5")
     BtnTestD.pack(side = LEFT,padx="5")
+    BtnCambiarLogo.pack(side = LEFT,padx="5")
+    BtnCambiarPatro.pack(side = LEFT,padx="5")
     BtnAbout.pack(side = LEFT,padx="5")
 
 
@@ -304,15 +328,97 @@ def add_headers_menu():
         widget.destroy()
 
 
-def principal_test():    
+def cambiar_logo():
+    change = Tk()
+    change.geometry("300x300")
+    change.configure(bg="#101010")
+    change.title("Cambiar Logo")
+
+    Fchange = Frame(change,bg="#101010")
+    Fchange.pack(pady = (50,50))
+    
+    Labelchange = Label(Fchange,text = "Dgite el nombre del nuevo logo",bg="#101010",fg = "white")
+    
+    Echange = Entry(Fchange)
+
+    btnChange = Button(Fchange,text = "Cambiar", command = lambda: change_Logo(Echange.get()),bg="#888")
+
+
+    Labelchange.pack(pady = 5)
+    Echange.pack()
+    btnChange.pack(pady = 5)
+
+
+    def  change_Logo(text):
+        docLogo = open("logo.txt", "w")
+        docLogo.write(text)
+        messagebox.showinfo(message="El logo se ha cambiado\nDebe de actualizar la ventana para que se muestre", title="Cambiar Logo")
+        change.destroy()
+
+
+def seleccionar_piloto():  
+    ventanaSeleccion = Tk()  
+    pilotos=[]
+    for piloto in lista_pilotos:
+        piloto = piloto.split(",")
+        pilotos.append(piloto[1]+" , "+piloto[3])
+
+    piloto=ttk.Combobox(ventanaSeleccion)
+    piloto['values']= pilotos
+    mensaje = Label(ventanaSeleccion,text= 'Seleccione un piloto')
+    mensaje.configure(font =("Arial Black","14"))
+    BtnSeleccionar = Button(ventanaSeleccion,text='Seleccionar',command = lambda:mostrar_test(piloto.get()))
+
+    mensaje.pack()
+    piloto.pack()
+    BtnSeleccionar.pack()
+
+
+    def mostrar_test(piloto):
+        piloto =piloto.split(" , ")
+        ventanaSeleccion.destroy()
+        principal_test(piloto[0],piloto[1])
+
+def cambiar_patro():
+    change = Tk()
+    change.geometry("300x300")
+    change.configure(bg="#101010")
+    change.title("Cambiar Patrocinadores")
+
+    Fchange = Frame(change,bg="#101010")
+    Fchange.pack(pady = (50,50))
+
+    mensaje = Label(change,text="Los Nombres de los Patrocinadores\nDeben ir Separados por una ',' ",bg="#101010",fg="white")
+
+    Labelchange = Label(Fchange,text = "Dgite los Nuevos Patrocinadores",bg="#101010",fg = "white")
+    
+    Echange = Entry(Fchange)
+
+    btnChange = Button(Fchange,text = "Cambiar", command = lambda: change_patro(Echange.get(),change),bg="#888")
+
+
+    Labelchange.pack(pady = 5)
+    Echange.pack()
+    btnChange.pack(pady = 5)
+    mensaje.pack(pady = 5)
+
+
+    def  change_patro(text,change):
+        docLogo = open("patrocinadores.txt", "w")
+        docLogo.write(text)
+        change.destroy()
+        messagebox.showinfo(message="Los patrocinadores se han actualizado\nDebe de actualizar la ventana para que se muestre", title="Cambiar Logo")
+
+
+def principal_test(nombre,Nacionalidad):    
     global Fprincipal
     for widget in Fprincipal.winfo_children():
         widget.destroy() 
-    dibuja_test("yo")
+    dibuja_test(nombre,Nacionalidad)
     botones_test()
 
 
-def dibuja_test(name):
+def dibuja_test(Nombre,Nacionalidad):
     ancho=ventana.winfo_screenwidth()
     ventana.geometry("%dx500"%(ancho))
     dibujo=Canvas(ventana,width=ancho,height=500)
@@ -322,14 +428,19 @@ def dibuja_test(name):
     dibujo.create_rectangle(0,250,ancho,500,fill="green")
     dibujo.create_rectangle(330,325,(ancho/4)+100,500,fill="#464849")
     dibujo.create_rectangle((ancho/2)+(ancho/4)-100,325,(ancho/2)+(ancho/4),500,fill="#464849")
-    nombre = Label(ventana,text='''"Nombre"''')
-    nombre_produ = Label(ventana,text='''"Nombre del producto"''')
-    dibujo.create_text(40,100,text="Escuderia")
-    dibujo.create_rectangle(675,65,790,100,fill="white")
-    dibujo.create_text(720,82,text='''"Nacionalidad"''')
     dibujo.create_polygon(ancho/4,500,ancho/2,200,(ancho/2)+(ancho/4),500,fill="#A3B23C")
-    nombre_produ.place(x = 0, y = 10)
+    
+    nombre = Label(ventana,text=Nombre)
+    Escuderia = Label(ventana,text="Ford")
+    Nacionalidad =Label(ventana,text=Nacionalidad)
+    
+    nombre.configure(font =("Arial Black","18") ,bg="#0099FF")
+    Escuderia.configure(font =("Arial Black","20") ,bg="#0099FF")
+    Nacionalidad.configure(font =("Arial Black","18") ,bg="#0099FF")
+
+    Escuderia.place(x = ancho/2.08, y = 100)
     nombre.place(x = ancho-150, y = 40)
+    Nacionalidad.place(x = ancho-150, y = 80)
     dibujo.place(x=0,y=0)
 
 
@@ -440,7 +551,7 @@ array_pilotos = []
 Fprincipal = Frame(top)
 Fprincipal.pack()
 botones = Frame(top,bg="#101010")
-botones.pack(side='bottom', pady=(100,0))
+botones.pack(side='bottom', pady=(50,0))
 
 onDer = 1
 onIzq = 1
